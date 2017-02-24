@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Explorer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/jquery-2.1.3.js"></script>
+    <script>
+
+        //HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings
+        var strInitProxy = '*.hbi.net;10.*.*.*;*.slci.net;*.leggsbrands.com;172.*.*.*;retaillink.walmart.com;*.hanesbi.net;*.ninthhouse.net;apparelnet;*ecf.deb.uscourts.gov;*.crossview.inc;*.ha.kroger.com;*.hbiapps.net;*.apparelnet.com;FSP.Hanes.com;*.ad.mfww.com;*.zapper.net;google.com;retaillink.wal-mart.com;outlook.office365.com;connect.dba-europe.com;*crossview.inc;*.hbr.stl.hec.sap.biz;*.hbi.net;10.*.*.*;*.slci.net;*.leggsbrands.com;172.*.*.*;retaillink.walmart.com;*.hanesbi.net;*.ninthhouse.net;apparelnet;*ecf.deb.uscourts.gov;*.crossview.inc;*.ha.kroger.com;*.hbiapps.net;*.apparelnet.com;FSP.Hanes.com;*.ad.mfww.com;*.zapper.net;google.com;retaillink.wal-mart.com;outlook.office365.com;connect.dba-europe.com;*crossview.inc;*.hbr.stl.hec.sap.biz;*.mail.onmicrosoft.com;*.outlook.com;192.168.*.*;*qlogitek.com;dev.*;qa.*;stage.*;<local>';
+        var strProxyOverRideVar = strInitProxy.replace('<local>', '');
+        strProxyOverRideVar += '*.*;';
+        var strProxOverride2 = '*.hbi.net;10.*.*.*;*.slci.net;*.leggsbrands.com;172.*.*.*;retaillink.walmart.com;*.hanesbi.net;*.ninthhouse.net;apparelnet;*ecf.deb.uscourts.gov;*.crossview.inc;*.ha.kroger.com;*.hbiapps.net;*.apparelnet.com;FSP.Hanes.com;*.ad.mfww.com;*.zapper.net;google.com;retaillink.wal-mart.com;outlook.office365.com;connect.dba-europe.com;*crossview.inc;*.hbr.stl.hec.sap.biz;*.hbi.net;10.*.*.*;*.slci.net;*.leggsbrands.com;172.*.*.*;retaillink.walmart.com;*.hanesbi.net;*.ninthhouse.net;apparelnet;*ecf.deb.uscourts.gov;*.crossview.inc;*.ha.kroger.com;*.hbiapps.net;*.apparelnet.com;FSP.Hanes.com;*.ad.mfww.com;*.zapper.net;google.com;retaillink.wal-mart.com;outlook.office365.com;connect.dba-europe.com;*crossview.inc;*.hbr.stl.hec.sap.biz;*.mail.onmicrosoft.com;*.outlook.com;192.168.*.*;*qlogitek.com;dev.*;qa.*;stage.*;*.*;'
+        $('document').ready(function () {
+            // list autostart programs
+            console.log('test');
+            var Registry = require('winreg')
+            var regKey = new Registry({                                       // new operator is optional
+                hive: Registry.HKCU,                                        // open registry hive HKEY_CURRENT_USER
+                key: '\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings' // key containing autostart programs
+            });
+            regKey.values(function (err, items /* array of RegistryItem */) {
+                if (err)
+                    console.log('ERROR: ' + err);
+                else
+                    for (var i = 0; i < items.length; i++) {
+                        var strValue = items[i].value;
+                        if (items[i].name == 'ProxyOverride') {
+                            //console.log('ITEM: ' + items[i].name + '\t' + items[i].type + '\t' + items[i].value);
+                            //var strName = items[i].name;
+                            //var strType = items[i].type;
+                            //console.log(strName);
+                            //console.log(strType);
+                            //var arrOfSites = strValue.split(';');
+                            if (strValue == strInitProxy) {
+                                strValue = 'Initial value set';
+                            } else{
+                                strValue = 'Overridden value with * is  set';
+                            };
+
+
+                            $('#proxyOverridden').text('Proxy is set to allow \n' + strValue);
+                            //var arrayOfStrings = stringToSplit.split('\;');
+                            //for (var i = 0; i < arrOfSites; i++) {
+                            //    $('#proxyOverridden').append(arrOfSites[i] + '\n' );
+                            //};
+                        } else if (items[i].name == 'ProxyEnable') {
+                            /*if (strValue) {
+                                strValue = 'On';
+                            } else {
+                                strValue = 'Off';
+                            };*/
+                            $('#proxyStatus').text('Proxy enabling is :\n ' + strValue);
+                        }
+                        //console.log('' + items[i].value);
+                    };
+            });
+            $('#proxyOff').click(function () {
+                regKey.set('ProxyOverride', 'REG_SZ', strProxOverride2, function () {
+                    console.log('Overridden')
+                    var value = regKey.get('ProxyOverride',function(){
+                        $('#proxyOverridden').text('ProxyOverride \n ' + JSON.stringify(value));
+                    });
+                    
+                });
+            });
+            $('#resetProxy').click(function () {
+                regKey.set('ProxyOverride', 'REG_SZ', strInitProxy, function () {
+                    console.log('reset')
+                    var value = regKey.get('ProxyOverride', function () {
+                        $('#proxyOverridden').text('ProxyOverride \n ' + JSON.stringify(value));
+                    });
+
+                });
+            });
+            $('#enableProxy').click(function () {
+                regKey.set('ProxyEnable', 'REG_DWORD', '0x1', function () {
+                    console.log('Proxy On');
+                    var value = regKey.get('proxyStatus', function () {
+                        $('#proxyStatus').text('ProxyOverride \n ' + JSON.stringify(value));
+                    });
+                    //$('#proxyStatus').text('Proxy is On.')
+                });
+            });
+            $('#disableProxy').click(function () {
+                regKey.set('ProxyEnable', 'REG_DWORD', '0x0', function () {
+                    console.log('Proxy Off');
+                    var value = regKey.get('proxyStatus', function () {
+                        $('#proxyStatus').text('ProxyOverride \n ' + JSON.stringify(value));
+                    });
+                    //$('#proxyStatus').text('Proxy is Off.')
+                });
+            });
+
+        });
+    </script>
+</head>
+<body>
+    <button id="proxyOff">Override Proxy</button>
+
+    <br />
+    <button id="resetProxy">Reset Proxy</button>
+
+    <br />
+    <button id="enableProxy">Turn On Proxy</button>
+
+    <br />
+    <button id="disableProxy">Turn Off Proxy</button>
+
+    <br />
+    <p id="proxyStatus"></p>
+    <br />
+    <p id="proxyOverridden"></p>
+</body>
+</html>
